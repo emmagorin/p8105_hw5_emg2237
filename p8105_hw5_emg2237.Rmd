@@ -152,3 +152,18 @@ Repeat the above for μ={1,2,3,4,5,6}, and complete the following:
 
 Make a plot showing the proportion of times the null was rejected (the power of the test) on the y axis and the true value of μ on the x axis. Describe the association between effect size and power.
 Make a plot showing the average estimate of μ̂  on the y axis and the true value of μ on the x axis. Make a second plot (or overlay on the first) the average estimate of μ̂  only in samples for which the null was rejected on the y axis and the true value of μ on the x axis. Is the sample average of μ̂  across tests for which the null is rejected approximately equal to the true value of μ? Why or why not?
+
+### Notes from live class session on this problem:
+
+We're going to simulate a sample from a normal distribution. SD of 5 and sample size of 30. We're going to change the mean, generate 5000 samples for each. We won't be computing the mean and standard devaiation, we're going to b exporting the results of a hypothesis test that tests whether or not the mean is =0. Should imagine that we'll reject the null hypothesis more as the mean goes up.
+
+Will use t.test and broom::tidy.
+
+Complicated parts: making plots. only show results where p val is < .05 and then compute the mean (for the second one.)
+
+Start with sim_mean_and_sd function from class, then modify slightly to get results from a t test instead. 
+
+Should we set seed? - sure
+should we use map? - sure
+
+Start sooner rather than later, use discussion board, etc. 
