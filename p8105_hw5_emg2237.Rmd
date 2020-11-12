@@ -38,11 +38,11 @@ homicide_df =
     resolved = case_when(
       disposition == "Closed without arrest" ~ "unsolved",
       disposition == "Open/No arrest"        ~ "unsolved",
-      disposition == "Closed by arrest"      ~ "unsolved",
+      disposition == "Closed by arrest"      ~ "solved",
     )
   ) %>% 
   select(city_state, resolved) %>% 
-  filter(city_state != "Tulsa_AL")
+  filter(city_state != "Tulsa_AL") %>% 
 ```
 
 Let's look at this a bit
@@ -74,15 +74,28 @@ Now run prop.test for each of the cities in your dataset, and extract both the p
 Try to iterate ....
 
 ```{r}
-aggregate_df %>%
+results_df = 
+  aggregate_df %>%
   mutate(
     prop_tests = map2(.x = hom_unsolved, .y = hom_total, ~prop.test(x = .x, n = .y)),
     tidy_tests = map(.x = prop_tests, ~broom::tidy(.x))
   ) %>% 
-  pull(tidy_tests)
+  select(-prop_tests) %>% 
+  unnest(tidy_tests) %>% 
+  select(city_state, estimate, conf.low, conf.high)
 ```
 
 Create a plot that shows the estimates and CIs for each city – check out geom_errorbar for a way to add error bars based on the upper and lower limits. Organize cities according to the proportion of unsolved homicides.
+
+```{r}
+results_df %>% 
+  mutate(city_state = fct_reorder(city_state, estimate)) %>% 
+  ggplot(aes(x = city_state, y = estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+
 
 ## Problem 2
 This zip file contains data from a longitudinal study that included a control arm and an experimental arm. Data for each participant is included in a separate file, and file names include the subject ID and arm.
