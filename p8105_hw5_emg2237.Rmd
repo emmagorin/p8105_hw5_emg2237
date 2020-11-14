@@ -102,38 +102,37 @@ This zip file contains data from a longitudinal study that included a control ar
 
 Create a tidy dataframe containing data from all participants, including the subject ID, arm, and observations over time:
 
-Start with a dataframe containing all file names; the list.files function will help
-Iterate over file names and read in data for each subject using purrr::map and saving the result as a new variable in the dataframe
-Tidy the result; manipulate file names to include control arm and subject ID, make sure weekly observations are “tidy”, and do any other tidying that’s necessary
-Make a spaghetti plot showing observations on each subject over time, and comment on differences between groups.
-
-## Notes from live session:
-- Longitudinal dataset: 20 different csvs, each for a study subject, each with weeks 1-7 
-- If you only had to import a single dataset, you would:
+* Start with a dataframe containing all file names; the list.files function will help
+* Iterate over file names and read in data for each subject using purrr::map and saving the result as a new variable in the dataframe
+* Tidy the result; manipulate file names to include control arm and subject ID, make sure weekly observations are “tidy”, and do any other tidying that’s necessary
 
 ```{r}
-data_1 = read_csv("lad_data/con_01.csv")
-```
-
-```{r}
-path_df = 
+lda_df = 
   tibble(
     path = list.files("lda_data")
-  ) %>% # now we have a list of files in the folder
+  ) %>% 
   mutate(path = str_c("lda_data/", path),
-         data = map(............)) # This is the main thing you have to figure out for this assignment. 
+         data = map(.x = path, ~read_csv(.x)),
+         arm = str_sub(path, -10, -8),
+         arm = recode(arm, "con" = "control", "exp" = "experiment"),
+         id = str_sub(path, -6, -5)) %>% 
+  unnest(data) %>% 
+  pivot_longer(cols = starts_with("week"), names_to = "week", names_prefix = "week_", values_to = "value") %>% 
+  select(arm, id, week, value)
 
-read_csv(path_df$path[[1]])
-# Challenge: how to do read csv along all 20 paths? If you can do this, then you can 
-
-#then, might need to pivot to get the data tidy. The rest of this is a data tidying/data organization problem.
 ```
- 
-He recommends a separate file for lda data, so it's not mixed up with the homicide data. 
 
-By thed end of this problem, everything should be in one tibble.
+Make a spaghetti plot showing observations on each subject over time, and comment on differences between groups.
 
-It's ok if data isn't all in one single data file. 
+```{r}
+lda_df %>% 
+  mutate(id = str_c(arm, id, sep = "_")) %>% 
+  ggplot(aes(x = week, y = value, group = id, color = arm)) +
+  geom_line() +
+  ggtitle("Observed values for experiment and control groups over time")
+```
+
+**It appears that at the start of the experiment, at week 1, the measured values for the experiment and control groups are roughly the same (which makes sense if these data are from a randomized trial. Throughout the course of the 8 weeks, the values for the control group fluctuate somewhat but remain within the same range, while the values in the experiment group increase. At the end of the experiment (week 8) every member of the experiment group has values higher than any member of the control group. If the hypothesis was that the treatment would increase this value - looks like these results support the hypothesis.**
 
 ## Problem 3
 When designing an experiment or analysis, a common question is whether it is likely that a true effect will be detected – put differently, whether a false null hypothesis will be rejected. The probability that a false null hypothesis is rejected is referred to as power, and it depends on several factors, including: the sample size; the effect size; and the error variance. In this problem, you will conduct a simulation to explore power in a simple linear regression.
